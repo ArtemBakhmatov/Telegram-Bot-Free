@@ -6,12 +6,60 @@ const bot = new TelegramBot(TOKEN, { // создаем экземпляр кла
     polling: true
 });
 
+const KB = {
+    currency: 'Курс валюты',
+    picture: 'Картинка',
+    cat: 'Котик',
+    car: 'Машина',
+    back: 'Назад'
+}
+
 bot.onText(/\/start/, msg => {  // вызвать команду
-    const text = `Приветствую, ${msg.from.first_name}\nЧто вы хотите сделать?`;
-    bot.sendMessage(msg.chat.id, text); // отправить сообщение(куда отправть, что отправить)
+    sendGreeting(msg);
 });
 
+bot.on('message', msg => {  // добавляет некоторую прослушку для бота
+    switch(msg.text) {
+        case KB.picture:
+            sendPictureScreen(msg.chat.id);
+            break;
+        case KB.currency:
+            break;
+        case KB.back:
+            sendGreeting(msg, false)
+            break;
+        case KB.car:
+        case KB.cat:
+            break;
+    }   
+});
 
+function sendPictureScreen(chatId) {
+    bot.sendMessage(chatId, `Выберите тип картинки: `, {
+        reply_markup: {
+            keyboard: [
+                [KB.car, KB.cat],
+                [KB.back]
+            ]
+        }
+    })
+}
+
+function sendGreeting(msg, sayHello = true) {
+    const text = sayHello
+        ? `Приветствую, ${msg.from.first_name}\nЧто вы хотите сделать?`
+        : `Что вы хотите сделать?`;
+        
+    bot.sendMessage(msg.chat.id, text, { // 3-й параметр будут кнопки
+        reply_markup: { // клавиатура
+            keyboard: [ // keyboard -> ключ
+                [KB.currency, KB.picture]   // будет одна строка
+            ]  
+        }
+    }); // отправить сообщение(куда отправть, что отправить)
+}
+
+// добавляет некоторую прослушку для бота
 // new TelegramBot(Наш токен, метод с помощью которого бот будет общаться с API telegram)
 // polling - это клиент-серверная технология, которая позволяет нам получать обновления с серверов телеграма.
 
