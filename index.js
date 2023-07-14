@@ -1,4 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api'); // подключем пакет в проект
+const _ = require('lodash');    // Подключаем рондомное число
+const fs = require('fs');       // Работа с файлами в нутри node.js (уже установлен)
 
 const TOKEN = '6111739674:AAGgcfYeGvQ224af0b6OI6JWciJFhdzEJjM';  // вход в наш созданый чат бот
 
@@ -12,6 +14,19 @@ const KB = {
     cat: 'Котик',
     car: 'Машина',
     back: 'Назад'
+}
+
+const picScrs = {
+    [KB.cat]: [
+        'cat1.jpg',
+        'cat2.jpg',
+        'cat3.jpg'
+    ],
+    [KB.car]: [
+        'car1.jpg',
+        'car2.jpg',
+        'car3.webp'
+    ]
 }
 
 bot.onText(/\/start/, msg => {  // вызвать команду
@@ -30,6 +45,7 @@ bot.on('message', msg => {  // добавляет некоторую просл�
             break;
         case KB.car:
         case KB.cat:
+            sendPictureByName(msg.chat.id, msg.text);
             break;
     }   
 });
@@ -59,7 +75,22 @@ function sendGreeting(msg, sayHello = true) {
     }); // отправить сообщение(куда отправть, что отправить)
 }
 
-// добавляет некоторую прослушку для бота
+function sendPictureByName(chatId, picName) {
+    const srcs = picScrs[picName];
+    const src = srcs[_.random(0, srcs.length - 1)];
+
+    bot.sendMessage(chatId, `Загружаю...`);
+
+    fs.readFile(`${__dirname}/picture/${src}`, (error, picture) => {
+        if (error) throw new Error(error);
+        bot.sendPhoto(chatId, picture).then(() => {
+            bot.sendMessage(chatId, `Отправлено!`);
+        })
+    });
+    console.log(srcs);
+    // __dirname -> отвечает за обсалютный путь
+}
+
 // new TelegramBot(Наш токен, метод с помощью которого бот будет общаться с API telegram)
 // polling - это клиент-серверная технология, которая позволяет нам получать обновления с серверов телеграма.
 
@@ -75,6 +106,8 @@ function sendGreeting(msg, sayHello = true) {
 // 3) Для комфортной разработки для автоматической перезагрузки сервера при каждом изменений в коде:
 // npm i nodemon
 
+// 4) Чтобы установливать рондомное число, установим пакет
+// npm i lodash
 
 // "scripts": {
 //     "dev": "nodemon index.js", // Для разработки
