@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api'); // подключем пакет в проект
+const request = require('request'); // для работы с удалн-ым сервером для node js
 const _ = require('lodash');    // Подключаем рондомное число
 const fs = require('fs');       // Работа с файлами в нутри node.js (уже установлен)
 
@@ -39,6 +40,7 @@ bot.on('message', msg => {  // добавляет некоторую просл�
             sendPictureScreen(msg.chat.id);
             break;
         case KB.currency:
+            sendCurrencyScreen(msg.chat.id);
             break;
         case KB.back:
             sendGreeting(msg, false)
@@ -50,6 +52,43 @@ bot.on('message', msg => {  // добавляет некоторую просл�
     }   
 });
 
+bot.on('callback_query', query => {
+    // console.log(JSON.stringify(query, null, 2));
+
+    const base = query.data;    // база для нашего запроса (usd или euro)
+    const symbol = 'RUB';       // символ
+    console.log(query.data);
+    let textCourse = '';
+
+    if (base === 'USD') {
+        textCourse = '90,12';
+    } else {
+        textCourse = '101,2';
+    }
+
+    bot.answerCallbackQuery({
+        callback_query_id: query.id,
+        text: `Вы выбрали ${base}`
+    })
+
+    const html = `<b>1 ${base}</b> - <em>${textCourse} ${symbol}</em>`
+    bot.sendMessage(query.message.chat.id, html, {
+        parse_mode: 'HTML'
+    });
+    
+    // request(`https://data.fixer.io/api/latest?symbols=${symbol}&base=${base}`, (error, response, body) => {
+    //     if (error) throw new Error(error);
+    //     if (response.statusCode === 200) {
+    //         const currencyData = JSON.parse(body);
+    //         const html = `<b>1 ${base}</b> - <em>100 ${symbol}</em>`
+    //         bot.sendMessage(query.message.chat.id, html, {
+    //             parse_mode: 'HTML'
+    //         });
+    //     }
+    // })
+});
+
+// callback_query -> команда при нажатии на кнопку
 function sendPictureScreen(chatId) {
     bot.sendMessage(chatId, `Выберите тип картинки: `, {
         reply_markup: {
@@ -91,11 +130,34 @@ function sendPictureByName(chatId, picName) {
     // __dirname -> отвечает за обсалютный путь
 }
 
+function sendCurrencyScreen(chatId) {
+    bot.sendMessage(chatId, `Выберите тип валюты: `, {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Доллар',
+                        callback_data: 'USD'
+                    }
+                ],
+                [
+                    {
+                        text: 'Евро',
+                        callback_data: 'EURO'
+                    }
+                ]
+            ]
+        }
+    })
+}
+
 // new TelegramBot(Наш токен, метод с помощью которого бот будет общаться с API telegram)
 // polling - это клиент-серверная технология, которая позволяет нам получать обновления с серверов телеграма.
 
 // Ссылки понадобятся для работы:
 // 1) https://github.com/yagop/node-telegram-bot-api  
+// 2) текущий курс валют от удаленного сервера https://fixer.io/\
+// 3) https://core.telegram.org/bots/api 
 
 // 1) Инициализация проекта (устанавливаем файл package.json)
 // npm init -y
@@ -108,6 +170,9 @@ function sendPictureByName(chatId, picName) {
 
 // 4) Чтобы установливать рондомное число, установим пакет
 // npm i lodash
+
+// 5) чтобы делать обращение к удаленному серверу, тоесть это аналог ajax (только для node js)
+// npm i request
 
 // "scripts": {
 //     "dev": "nodemon index.js", // Для разработки
